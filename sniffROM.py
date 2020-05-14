@@ -205,7 +205,7 @@ def print_data(data, addr, access_type):
     #    print ' {0} {1} {2} bytes'.format(bargraph, access_type, offset)
     #else:
     #    print ' {0} {1} bytes'.format(access_type, offset)
-    print ' {0} {1} bytes'.format(access_type, offset)
+    print ' {0} {1} bytes '.format(access_type, offset), '(0x{0:X})'.format(offset)
     dump(str(data), 16, addr)
 
 def print_new_cmd(command):
