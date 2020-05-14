@@ -708,7 +708,7 @@ if args.summary:
 
 
 if args.data_map:
-    print('[!] Data Map: Not ported to Python3')
+    print('[!] Data Map : Not ported to Python3')
     '''
     print( 'Generating data map...')
     if chip_type == "I2C":
@@ -718,7 +718,7 @@ if args.data_map:
     #mapping_remainder = FLASH_ENDING_SIZE % GRAPH_BYTES_PER_ROW
     mapping_rows = highest_byte / GRAPH_BYTES_PER_ROW
     mapping_remainder = highest_byte % GRAPH_BYTES_PER_ROW
-    mapping_rows = int(mapping_rows)
+    
     for row in range(0,mapping_rows):
         mapping_bytes.append(mapping_image[row*GRAPH_BYTES_PER_ROW:(row*GRAPH_BYTES_PER_ROW)+GRAPH_BYTES_PER_ROW])
 
