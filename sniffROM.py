@@ -24,6 +24,7 @@ FLASH_ENDING_SIZE = FLASH_WRITES_ENDING_SIZE = FLASH_PADDED_SIZE
 GRAPH_BYTES_PER_ROW = 2048
 MINOR_GRAPH_BYTES_PER_ROW = 512
 INVALID_DATA = -1
+READ_COMMANDS = [0x03,0x0b,0x0c,0xbb,0x3b]
 
 chip_vendors = {
 #       MFR ID  NAME
@@ -269,6 +270,7 @@ i2c_read_addr = 0x00
 i2c_write_addr = 0x00
 i2c_reads = 0
 i2c_writes = 0
+last_packet_id=0
 
 parser = argparse.ArgumentParser(description="sniffROM - Reconstructs flash memory contents and extracts other data from passively sniffed commands in a Saleae logic analyzer capture file. Currently supports SPI and I2C flash chips.")
 parser.add_argument("input_file", help="Saleae Logic SPI or I2C Analyzer Export File (.csv)")
@@ -281,6 +283,7 @@ parser.add_argument("--summary", help="print summary of sniffed commands and met
 parser.add_argument("--data-map", help="show visual data map", action="store_true")
 parser.add_argument("--timing-plot", help="show timing analysis", action="store_true")
 parser.add_argument("-v", help="increase verbosity (up to -vvv)", action="count")
+parser.add_argument("--correct-id", help="attempt to correct the id based on a read (end might be incorrect)", action="store_true")
 args = parser.parse_args()
 
 
@@ -308,8 +311,16 @@ for packet in packets:
     packet_time = float(packet[0])
     if packet[1] != '':
         new_packet_id = int(packet[1])
+        last_packet_id=new_packet_id
     else:
         new_packet_id = INVALID_DATA
+
+    if new_packet_id == INVALID_DATA and args.correct_id:
+        mosi_data = int(packet[2], 16)
+        if mosi_data in READ_COMMANDS:
+            last_packet_id = last_packet_id + 1
+            new_packet_id = last_packet_id # assign new id that is missing
+
     if chip_type == "I2C":
         i2c_addr = int(packet[2], 16)
         if packet[3] != '':
