@@ -20,7 +20,7 @@ See the [Wiki](https://github.com/alainiamburg/sniffROM/wiki) for documentation
 ```
 usage: sniffROM_new.py [-h] [--addrlen [{2,3,4}]] [--endian [{msb,lsb}]]
                        [--filter [{r,w}]] [-o [O]] [--summary] [--data-map]
-                       [--timing-plot] [-v]
+                       [--timing-plot] [-v] [--correct-id]
                        input_file
 
 sniffROM - Reconstructs flash memory contents and extracts other data from
@@ -40,4 +40,5 @@ optional arguments:
   --data-map            show visual data map
   --timing-plot         show timing analysis
   -v                    increase verbosity (up to -vvv)
+  --correct-id          attempt to correct the packet id based on a READ command (end might be incorrect)
 ```
