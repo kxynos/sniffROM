@@ -283,7 +283,7 @@ parser.add_argument("--summary", help="print summary of sniffed commands and met
 parser.add_argument("--data-map", help="show visual data map", action="store_true")
 parser.add_argument("--timing-plot", help="show timing analysis", action="store_true")
 parser.add_argument("-v", help="increase verbosity (up to -vvv)", action="count")
-parser.add_argument("--correct-id", help="attempt to correct the id based on a read (end might be incorrect)", action="store_true")
+parser.add_argument("--correct-id", help="attempt to correct the packet id based on a READ command (end might be incorrect)", action="store_true")
 args = parser.parse_args()
 
 
