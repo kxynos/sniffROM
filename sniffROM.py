@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse, csv, sys
 import matplotlib
 #matplotlib.use('Agg')  # This is needed if no X windows server
@@ -173,11 +175,10 @@ spi_commands = {
 def dump(data, length, addr):
     hex = lambda line: ' '.join('{:02x}'.format(b) for b in map(ord, line))
     str = lambda line: ''.join(31 < c < 127 and chr(c) or '.' for c in map(ord, line))
-
     for i in range(0, len(data), length):
         line = data[i:i+length]
         print('  0x{:08x}   {:47}   {}'.format(addr+i, hex(line), str(line)))
-    print ""
+    print('')
 
 def plot_func(x, pos):
     s = '0x%06x' % (int(x)*GRAPH_BYTES_PER_ROW)
@@ -202,17 +203,17 @@ def print_data(data, addr, access_type):
         bargraph = "[\033[31;49m******\033[0m]"
 
     #if args.colors:
-    #    print ' {0} {1} {2} bytes'.format(bargraph, access_type, offset)
+    #    print(' {0} {1} {2} bytes'.format(bargraph, access_type, offset))
     #else:
-    #    print ' {0} {1} bytes'.format(access_type, offset)
-    print ' {0} {1} bytes '.format(access_type, offset), '(0x{0:X})'.format(offset)
-    dump(str(data), 16, addr)
+    #    print(' {0} {1} bytes'.format(access_type, offset))
+    print(' {0} {1} bytes '.format(access_type, offset), '(0x{0:X})'.format(offset))
+    dump(data.decode("unicode_escape"), 16, addr)
 
 def print_new_cmd(command):
     if ((("r" in args.filter) and (spi_commands[command][1] == "Read")) or
             (("w" in args.filter) and (spi_commands[command][1] == "Write"))):
-        print 'Time: {0:.8f}   Packet ID: {1:7}   Command: 0x{2:02X} - {3}'.format(
-                        packet_time, packet_id, command, spi_commands[command][0])
+        print('Time: {0:.8f}   Packet ID: {1:7}   Command: 0x{2:02X} - {3}'.format(
+                        packet_time, packet_id, command, spi_commands[command][0]))
 
 def bytes_to_addr(bytes):
     if args.endian == "msb":
@@ -288,11 +289,11 @@ args = parser.parse_args()
 
 
 try:
-    infile = open(args.input_file, 'rb')
+    infile = open(args.input_file, 'r')
     packets = csv.reader(infile)
-    header = packets.next()
+    header = next(packets)
 except:
-    print 'Failed to open the input file'
+    print('Failed to open the input file')
     exit()
 
 if header[2] == "MOSI":
@@ -303,10 +304,10 @@ elif header[2] == "Address":
     chip_type = "I2C"
     address_bytes = bytearray([0x00] * 2)
 else:
-    print 'Unrecognized input file. Exiting.'
+    print('Unrecognized input file. Exiting.')
     exit()
 
-print "Parsing {0} data...\n".format(chip_type)
+print('Parsing {0} data...\n'.format(chip_type))
 for packet in packets:
     packet_time = float(packet[0])
     if packet[1] != '':
@@ -317,8 +318,11 @@ for packet in packets:
 
     if new_packet_id == INVALID_DATA and args.correct_id:
         mosi_data = int(packet[2], 16)
-        #if mosi_data in READ_COMMANDS:
-        if mosi_data in spi_commands.keys()[1:]: # ignore 0x00
+        
+        # ignore 0x00
+        new_spi_commands_list = list(spi_commands.keys())
+        new_spi_commands_list.remove(0)
+        if mosi_data in new_spi_commands_list: 
             last_packet_id = last_packet_id + 1
             new_packet_id = last_packet_id # assign new id that is missing
 
@@ -346,7 +350,7 @@ for packet in packets:
             read_byte = INVALID_DATA
             write_byte = INVALID_DATA
             if new_packet_id == INVALID_DATA:
-                print 'Time: {0:.8f}   Packet ID:         Skip Packet (missing ID)'.format(packet_time)
+                print('Time: {0:.8f}   Packet ID:         Skip Packet (missing ID)'.format(packet_time))
                 continue
             else:
                 packet_id = new_packet_id
@@ -358,8 +362,8 @@ for packet in packets:
                 if curr_addr_byte == 1:
                     address = (address_bytes[0] << 8) + (address_bytes[1])
                     if args.v > 0:
-                        print 'Time: {0:.8f}   Packet ID: {1:7}   Access Data @ 0x{2:02x}'.format(
-                                        packet_time, packet_id, address)
+                        print('Time: {0:.8f}   Packet ID: {1:7}   Access Data @ 0x{2:02x}'.format(
+                                        packet_time, packet_id, address))
                 curr_addr_byte += 1
             else:
                 write_byte = sdl_data
@@ -377,8 +381,8 @@ for packet in packets:
             i2c_read_addr = i2c_addr
             if flash_image[address+offset] != FLASH_FILL_BYTE:
                 if args.v > 2:
-                    print ' [*] Repeated access to memory @ 0x{:02x}'.format(
-                                            address+offset)
+                    print(' [*] Repeated access to memory @ 0x{:02x}'.format(
+                                            address+offset))
             else:
                 bytes_sniffed += 1
             flash_image[address+offset] = read_byte
@@ -407,8 +411,8 @@ for packet in packets:
                 unknown_commands += 1
                 command = -1
                 if args.v > 0:
-                    print 'Time: {0:.8f}   Packet ID: {1:7}   Command: 0x{2:02X} - Unknown'.format(
-                                    packet_time, packet_id, new_command)
+                    print('Time: {0:.8f}   Packet ID: {1:7}   Command: 0x{2:02X} - Unknown'.format(
+                                    packet_time, packet_id, new_command))
             else:
                 command = new_command
                 spi_commands[command][2] += 1
@@ -419,12 +423,12 @@ for packet in packets:
                 args.addrlen = 4
                 EN4B = True
                 if args.v > 1:
-                    print " [*] Address length changed from {0} to {1} bytes".format(orig_addrlen, args.addrlen)
+                    print(' [*] Address length changed from {0} to {1} bytes'.format(orig_addrlen, args.addrlen))
             elif command == 0xe9:
                 if EN4B == True:                        # Disable 4-byte address mode
                     args.addrlen = orig_addrlen
                     if args.v > 1:
-                        print " [*] Address length changed from 4 to {0} bytes".format(orig_addrlen)
+                        print(' [*] Address length changed from 4 to {0} bytes'.format(orig_addrlen))
                     EN4B = False
         elif ((command == 0x03) or       # Read
               (command == 0x0b) or       # Fast Read
@@ -439,7 +443,7 @@ for packet in packets:
                         address = bytes_to_addr(address_bytes)
                         if flash_image[address+offset] != FLASH_FILL_BYTE:    # hacky way to check for multiple access to this addr
                             if args.v > 2:
-                                print ' [*] Repeated access to memory @ 0x{:02x}'.format(address+offset)
+                                print(' [*] Repeated access to memory @ 0x{:02x}'.format(address+offset))
                         else:
                             bytes_sniffed += 1
                         if command == 0x3b or command == 0xbb:
@@ -458,7 +462,7 @@ for packet in packets:
 
                             if flash_image[address+offset] != FLASH_FILL_BYTE:    # hacky way to check for multiple access to this addr
                                 if args.v > 2:
-                                    print ' [*] Repeated access to memory @ 0x{:02x}'.format(address+offset)
+                                    print(' [*] Repeated access to memory @ 0x{:02x}'.format(address+offset))
 
                             # save second byte
                             flash_image[address+offset] = read_byte2
@@ -499,8 +503,8 @@ for packet in packets:
 
                     if flash_image[address+offset] != FLASH_FILL_BYTE:    # hacky way to check for multiple access to this addr
                         if args.v > 2:
-                            print ' [*] Repeated access to memory @ 0x{:02x}'.format(
-                                                    address+offset)
+                            print(' [*] Repeated access to memory @ 0x{:02x}'.format(
+                                                    address+offset))
                     else:
                         bytes_sniffed += 1
                     flash_image_fromWrites[address+offset] = write_byte    # holds write data separately
@@ -521,7 +525,7 @@ for packet in packets:
             if dummy_bytes_rpddid == 3:    # If this command is followed by 3 dummy bytes,
                 device_id = read_byte      #  then it is a Device ID command
                 if args.v > 0:
-                    print ' [+] Device ID: 0x{0:02X}'.format(int(device_id))
+                    print(' [+] Device ID: 0x{0:02X}'.format(int(device_id)))
             else:
                 dummy_bytes_rpddid += 1
         elif command == 0x9f:            # read JEDEC ID (1 byte MFG ID, and 1-3 byte Device ID)
@@ -531,8 +535,8 @@ for packet in packets:
                 curr_id_byte += 1
             else:
                 if args.v > 0:
-                    print ' [+] Manufacturer ID: 0x{0:02X}'.format(int(jedec_id[0]))
-                    print ' [+] Device ID: 0x{0:02X}{1:02X}'.format(int(jedec_id[1]), int(jedec_id[2]))
+                    print(' [+] Manufacturer ID: 0x{0:02X}'.format(int(jedec_id[0])))
+                    print(' [+] Device ID: 0x{0:02X}{1:02X}'.format(int(jedec_id[1]), int(jedec_id[2])))
         elif (command == 0x01 or      # Write Status Register 1
                 command == 0x05):       # Read Status Register 1
             sr_byte = mosi_data if command == 0x01 else miso_data
@@ -561,89 +565,89 @@ for packet in packets:
                     SRP = "Software Controlled (WEL)"
 
             if args.v > 1:
-                print '  +----------------------------------------------------------+'
-                print '  |                                                          |'
-                print '  |                Status Register 1 = 0x{:02X}                  |'.format(SR1)
-                print '  |                                                          |'
-                print '  +-----+------+-------------------------------+-------------+'
-                print '  | Bit | Name | Description                   | Value       |'
-                print '  +-----+------+-------------------------------+-------------+'
-                print '  |  7  | SRP0 | Status Register Protect 0     | {:d}           |'.format(1 if SRP0 else 0)
-                print '  |  6  | SEC  | Sector Protect Bit            | {:d}           |'.format(1 if SEC else 0)
-                print '  |  5  | TB   | Top/Bottom Protect Bit        | {:d}           |'.format(1 if TB else 0)
-                print '  |  4  | BP2  | Block Protect Bit 2           | {:d}           |'.format(1 if BP2 else 0)
-                print '  |  3  | BP1  | Block Protect Bit 1           | {:d}           |'.format(1 if BP1 else 0)
-                print '  |  2  | BP0  | Block Protect Bit 0           | {:d}           |'.format(1 if BP0 else 0)
-                print '  |  1  | WEL  | Write Enable Latch            | {:d}           |'.format(1 if WEL else 0)
-                print '  |  0  | BUSY | Erase/Write In Progress       | {:d}           |'.format(1 if BUSY else 0)
-                print '  +-----+------+-------------------------------+-------------+'
-                print '  |                                                          |'
-                print '  |       Write Protection: {0}        |'.format(SRP)
-                print '  |                                                          |'
-                print '  +---------+---------------------+---------+----------------+'
-                print '  |  Block  | Addresses           | Density | Portion        |'
-                print '  +---------+---------------------+---------+----------------+'
+                print('  +----------------------------------------------------------+')
+                print('  |                                                          |')
+                print('  |                Status Register 1 = 0x{:02X}                  |'.format(SR1))
+                print('  |                                                          |')
+                print('  +-----+------+-------------------------------+-------------+')
+                print('  | Bit | Name | Description                   | Value       |')
+                print('  +-----+------+-------------------------------+-------------+')
+                print('  |  7  | SRP0 | Status Register Protect 0     | {:d}           |'.format(1 if SRP0 else 0))
+                print('  |  6  | SEC  | Sector Protect Bit            | {:d}           |'.format(1 if SEC else 0))
+                print('  |  5  | TB   | Top/Bottom Protect Bit        | {:d}           |'.format(1 if TB else 0))
+                print('  |  4  | BP2  | Block Protect Bit 2           | {:d}           |'.format(1 if BP2 else 0))
+                print('  |  3  | BP1  | Block Protect Bit 1           | {:d}           |'.format(1 if BP1 else 0))
+                print('  |  2  | BP0  | Block Protect Bit 0           | {:d}           |'.format(1 if BP0 else 0))
+                print('  |  1  | WEL  | Write Enable Latch            | {:d}           |'.format(1 if WEL else 0))
+                print('  |  0  | BUSY | Erase/Write In Progress       | {:d}           |'.format(1 if BUSY else 0))
+                print('  +-----+------+-------------------------------+-------------+')
+                print('  |                                                          |')
+                print('  |       Write Protection: {0}        |'.format(SRP))
+                print('  |                                                          |')
+                print('  +---------+---------------------+---------+----------------+')
+                print('  |  Block  | Addresses           | Density | Portion        |')
+                print('  +---------+---------------------+---------+----------------+')
                 if BP2:
                     if BP1:
                         if BP0:
-                            print '  |   0-127  | 0x000000 - 0x7FFFFF |    8MB  |   ALL          |'
+                            print('  |   0-127  | 0x000000 - 0x7FFFFF |    8MB  |   ALL          |')
                         else:
                             if TB:
-                                print '  |   0-63  | 0x000000 - 0x3FFFFF |    4MB  |   Lower 1/2    |'
+                                print( '  |   0-63  | 0x000000 - 0x3FFFFF |    4MB  |   Lower 1/2    |')
                             else:
-                                print '  |  64-127 | 0x400000 - 0x7FFFFF |    4MB  |   Upper 1/2    |'
+                                print( '  |  64-127 | 0x400000 - 0x7FFFFF |    4MB  |   Upper 1/2    |')
                     else:
                         if BP0:
                             if SEC:
                                 if TB:
-                                    print '  |    0   | 0x000000 - 0x007FFF |   32KB  |   Lower 1/256  |'
+                                    print( '  |    0   | 0x000000 - 0x007FFF |   32KB  |   Lower 1/256  |')
                                 else:
-                                    print '  |   127  | 0x7F8000 - 0x7FFFFF |   32KB  |   Upper 1/256  |'
+                                    print( '  |   127  | 0x7F8000 - 0x7FFFFF |   32KB  |   Upper 1/256  |')
                             else:
                                 if TB:
-                                    print '  |   0-31  | 0x000000 - 0x1FFFFF |    2MB  |   Lower 1/4    |'
+                                    print( '  |   0-31  | 0x000000 - 0x1FFFFF |    2MB  |   Lower 1/4    |')
                                 else:
-                                    print '  |  96-127 | 0x000000 - 0x7FFFFF |    2MB  |   Upper 1/4    |'
+                                    print( '  |  96-127 | 0x000000 - 0x7FFFFF |    2MB  |   Upper 1/4    |')
                         else:
                             if BP1:
                                 if BP0:
                                     if SEC:
                                         if TB:
-                                            print '  |     0    | 0x000000 - 0x003FFF |   16KB  |  Lower 1/512   |'
+                                            print( '  |     0    | 0x000000 - 0x003FFF |   16KB  |  Lower 1/512   |')
                                         else:
-                                            print '  |    127   | 0x7FC000 - 0x7FFFFF |   16KB  |  Upper 1/512   |'
+                                            print( '  |    127   | 0x7FC000 - 0x7FFFFF |   16KB  |  Upper 1/512   |')
                                     else:
                                         if TB:
-                                            print '  |   0-7    | 0x000000 - 0x7FFFFF |  512KB  |  Lower 1/16    |'
+                                            print( '  |   0-7    | 0x000000 - 0x7FFFFF |  512KB  |  Lower 1/16    |')
                                         else:
-                                            print '  | 120-127  | 0x780000 - 0x7FFFFF |  512KB  |  Upper 1/16    |'
+                                            print( '  | 120-127  | 0x780000 - 0x7FFFFF |  512KB  |  Upper 1/16    |')
                                 else:
                                     if SEC:
                                         if TB:
-                                            print '  |    0    | 0x000000 - 0x001FFF |    8KB  |  Lower 1/1024  |'
+                                            print( '  |    0    | 0x000000 - 0x001FFF |    8KB  |  Lower 1/1024  |')
                                         else:
-                                            print '  |   127   | 0x7FE000 - 0x7FFFFF |    8KB  |  Upper 1/1024  |'
+                                            print( '  |   127   | 0x7FE000 - 0x7FFFFF |    8KB  |  Upper 1/1024  |')
                                     else:
                                         if TB:
-                                            print '  |   0-3   | 0x000000 - 0x3FFFFF |  256KB  |   Lower 1/32   |'
+                                            print( '  |   0-3   | 0x000000 - 0x3FFFFF |  256KB  |   Lower 1/32   |')
                                         else:
-                                            print '  | 124-127 | 0x7C0000 - 0x7FFFFF |  256KB  |   Upper 1/32   |'
+                                            print( '  | 124-127 | 0x7C0000 - 0x7FFFFF |  256KB  |   Upper 1/32   |')
                             else:
                                 if BP0:
                                     if SEC:
                                         if TB:
-                                            print '  |    0   | 0x000000 - 0x000FFF |    4KB  |  Lower 1/2048  |'
+                                            print( '  |    0   | 0x000000 - 0x000FFF |    4KB  |  Lower 1/2048  |')
                                         else:
-                                            print '  |   127  | 0x7FF000 - 0x7FFFFF |    4KB  |  Upper 1/2048  |'
+                                            print( '  |   127  | 0x7FF000 - 0x7FFFFF |    4KB  |  Upper 1/2048  |')
                                     else:
                                         if TB:
-                                            print '  |   0-1   | 0x000000 - 0x1FFFFF |  128KB  |   Lower 1/64   |'
+                                            print( '  |   0-1   | 0x000000 - 0x1FFFFF |  128KB  |   Lower 1/64   |')
                                         else:
-                                            print '  | 126-127 | 0x7E0000 - 0x7FFFFF |  128KB  |   Upper 1/64   |'
+                                            print( '  | 126-127 | 0x7E0000 - 0x7FFFFF |  128KB  |   Upper 1/64   |')
                 else:
-                    print '  |   ---   |        -----        |   ---   |      ----      |'
-                print '  +---------+---------------------+---------+----------------+'
-                print ''
+                    print( '  |   ---   |        -----        |   ---   |      ----      |')
+                print( '  +---------+---------------------+---------+----------------+')
+                print( '')
 
 
 if offset > 0:
@@ -668,43 +672,43 @@ try:
     #with open('out_write.bin', 'wb') as outfile:
     #       outfile.write(flash_image_fromWrites[0:FLASH_WRITES_ENDING_SIZE])
 except:
-    print 'Failed to write the output file'
+    print('Failed to write the output file')
 #print 'Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
 #                FLASH_ENDING_SIZE, args.o, bytes_sniffed, ((bytes_sniffed / float(FLASH_ENDING_SIZE)) * 100.0), bytes_sniffed_written)
-print 'Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
-                highest_byte+1, args.o, bytes_sniffed, ((bytes_sniffed / float(highest_byte)) * 100.0), bytes_sniffed_written)
+print('Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
+                highest_byte+1, args.o, bytes_sniffed, ((bytes_sniffed / float(highest_byte)) * 100.0), bytes_sniffed_written))
 
 
 
 if args.summary:
-    print '\nSummary:\n'
+    print('\nSummary:\n')
     if jedec_id[0]:
-        print 'Mfr. ID: 0x{0:02X} ({1})'.format(int(jedec_id[0]), chip_vendors.get(jedec_id[0], "Unknown"))
-        print 'Device ID: 0x{0:02X}{1:02X}\n'.format(int(jedec_id[1]), int(jedec_id[2]))
+        print('Mfr. ID: 0x{0:02X} ({1})'.format(int(jedec_id[0]), chip_vendors.get(jedec_id[0], "Unknown")))
+        print('Device ID: 0x{0:02X}{1:02X}\n'.format(int(jedec_id[1]), int(jedec_id[2])))
     if device_id:
-        print 'Device ID: 0x{0:02X}\n'.format(int(device_id))
+        print('Device ID: 0x{0:02X}\n'.format(int(device_id)))
     if chip_type == "SPI":
-        print '+------+-----------+-----------------------------------------------------------+'
-        print '| Cmd  | Instances | Description                                               |'
-        print '+------+-----------+-----------------------------------------------------------+'
+        print('+------+-----------+-----------------------------------------------------------+')
+        print('| Cmd  | Instances | Description                                               |')
+        print('+------+-----------+-----------------------------------------------------------+')
         for command in spi_commands:
             if spi_commands[command][2] > 0:
-                print "| 0x{0:02X} | {1:9} | {2:57} |".format(command, spi_commands[command][2], spi_commands[command][0])
+                print('| 0x{0:02X} | {1:9} | {2:57} |'.format(command, spi_commands[command][2], spi_commands[command][0]))
         if unknown_commands > 0:
-            print "| Unk. | {0:9} | Unknown Command / Error in Capture                        |".format(unknown_commands)
-        print '+------+-----------+-----------------------------------------------------------+'
+            print('| Unk. | {0:9} | Unknown Command / Error in Capture                        |'.format(unknown_commands))
+        print('+------+-----------+-----------------------------------------------------------+')
     elif chip_type == "I2C":
-        print '+------+-----------+-----------+'
-        print '| Addr | Instances | Operation |'
-        print '+------+-----------+-----------+'
-        print "| 0x{0:02X} | {1:9} | Read      |".format(i2c_read_addr, i2c_reads)
-        print "| 0x{0:02X} | {1:9} | Write     |".format(i2c_write_addr, i2c_writes)
-        print '+------+-----------+-----------+'
-    print ''
+        print('+------+-----------+-----------+')
+        print('| Addr | Instances | Operation |')
+        print('+------+-----------+-----------+')
+        print('| 0x{0:02X} | {1:9} | Read      |'.format(i2c_read_addr, i2c_reads))
+        print('| 0x{0:02X} | {1:9} | Write     |'.format(i2c_write_addr, i2c_writes))
+        print('+------+-----------+-----------+')
+    print('')
 
 
 if args.data_map:
-    print 'Generating data map...'
+    print( 'Generating data map...')
     if chip_type == "I2C":
         GRAPH_BYTES_PER_ROW = 512
     mapping_bytes = []
@@ -734,7 +738,7 @@ if args.data_map:
     plt.show()
 
 if args.timing_plot:
-    print 'Generating timing plot...'
+    print('Generating timing plot...')
     x_axis = [tick for tick in range(0,len(map_timing_addresses))]
     y_axis = map_timing_addresses
     #plt.rcParams['axes.facecolor'] = 'black'   # black background
