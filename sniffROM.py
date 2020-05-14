@@ -317,7 +317,8 @@ for packet in packets:
 
     if new_packet_id == INVALID_DATA and args.correct_id:
         mosi_data = int(packet[2], 16)
-        if mosi_data in READ_COMMANDS:
+        #if mosi_data in READ_COMMANDS:
+        if mosi_data in spi_commands.keys()[1:]: # ignore 0x00
             last_packet_id = last_packet_id + 1
             new_packet_id = last_packet_id # assign new id that is missing
 
