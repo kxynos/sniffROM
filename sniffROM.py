@@ -708,6 +708,8 @@ if args.summary:
 
 
 if args.data_map:
+    print('[!] Data Map: Not ported to Python3')
+    '''
     print( 'Generating data map...')
     if chip_type == "I2C":
         GRAPH_BYTES_PER_ROW = 512
@@ -716,7 +718,7 @@ if args.data_map:
     #mapping_remainder = FLASH_ENDING_SIZE % GRAPH_BYTES_PER_ROW
     mapping_rows = highest_byte / GRAPH_BYTES_PER_ROW
     mapping_remainder = highest_byte % GRAPH_BYTES_PER_ROW
-
+    mapping_rows = int(mapping_rows)
     for row in range(0,mapping_rows):
         mapping_bytes.append(mapping_image[row*GRAPH_BYTES_PER_ROW:(row*GRAPH_BYTES_PER_ROW)+GRAPH_BYTES_PER_ROW])
 
@@ -736,8 +738,11 @@ if args.data_map:
     axes.get_yaxis().set_major_formatter(ticker.FuncFormatter(plot_func))
     axes.get_yaxis().set_minor_formatter(ticker.FuncFormatter(plot_func_minor))
     plt.show()
+    '''
 
 if args.timing_plot:
+    print('[!] Timing Plot: Not ported to Python3')
+    '''
     print('Generating timing plot...')
     x_axis = [tick for tick in range(0,len(map_timing_addresses))]
     y_axis = map_timing_addresses
@@ -764,3 +769,4 @@ if args.timing_plot:
     plt.ylabel('Address')
     plt.xlabel('Time Ticks')
     plt.show()
+    '''
