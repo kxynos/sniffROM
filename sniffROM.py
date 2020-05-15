@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import argparse, csv, sys
 import matplotlib
 #matplotlib.use('Agg')  # This is needed if no X windows server
@@ -283,7 +285,8 @@ parser.add_argument("--summary", help="print summary of sniffed commands and met
 parser.add_argument("--data-map", help="show visual data map", action="store_true")
 parser.add_argument("--timing-plot", help="show timing analysis", action="store_true")
 parser.add_argument("-v", help="increase verbosity (up to -vvv)", action="count")
-parser.add_argument("--correct-id", help="attempt to correct the packet id based on a READ command (end might be incorrect)", action="store_true")
+parser.add_argument("--correct-id", help="attempt to correct the packet id based on a ANY MISO command (end might be incorrect)", action="store_true")
+parser.add_argument("--correct-id-read", help="attempt to correct the packet id based on a READ command (end might be incorrect)", action="store_true")
 args = parser.parse_args()
 
 
@@ -338,10 +341,14 @@ for packet in packets:
 
     if new_packet_id == INVALID_DATA and args.correct_id:
         mosi_data = int(packet[2], 16)
-        #if mosi_data in READ_COMMANDS:
-        if mosi_data in spi_commands.keys()[1:]: # ignore 0x00
-            last_packet_id = last_packet_id + 1
-            new_packet_id = last_packet_id # assign new id that is missing
+        if args.correct_id_read:
+            if mosi_data in READ_COMMANDS:
+                last_packet_id = last_packet_id + 1
+                new_packet_id = last_packet_id # assign new id that is missing
+        else:
+            if mosi_data in spi_commands.keys()[1:]: # ignore 0x00
+                last_packet_id = last_packet_id + 1
+                new_packet_id = last_packet_id # assign new id that is missing
 
     if chip_type == "I2C":
         i2c_addr = int(packet[2], 16)
