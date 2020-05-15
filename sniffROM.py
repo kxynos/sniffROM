@@ -276,7 +276,7 @@ parser = argparse.ArgumentParser(description="sniffROM - Reconstructs flash memo
 parser.add_argument("input_file", help="Saleae Logic SPI or I2C Analyzer Export File (.csv)")
 parser.add_argument("--addrlen", type=int, choices=[2,3,4], nargs="?", default=3, help="set length of SPI memory address in bytes (default: 3)")
 parser.add_argument("--endian", choices=["msb", "lsb"], nargs="?", default="msb", help="set endianness of SPI memory bytes (default: msb)")
-parser.add_argument("--filter", choices=["rw","r", "w","no_regs"], nargs="?", default="rw", help="analyze only Read or Write commands (default: both)")
+parser.add_argument("--filter", choices=["rw","r", "w","no_regs"], nargs="?", default="rw", help="analyze only Read or Write commands (default: both), no_regs filters out Status Register output")
 parser.add_argument("-o", nargs="?", default="output.bin", help="flash image output file name (default: output.bin)")
 parser.add_argument("--summary", help="print summary of sniffed commands and metadata", action="store_true")
 #parser.add_argument("--colors", help="output color codes", action="store_true")
