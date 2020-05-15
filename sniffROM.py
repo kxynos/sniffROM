@@ -276,7 +276,7 @@ parser = argparse.ArgumentParser(description="sniffROM - Reconstructs flash memo
 parser.add_argument("input_file", help="Saleae Logic SPI or I2C Analyzer Export File (.csv)")
 parser.add_argument("--addrlen", type=int, choices=[2,3,4], nargs="?", default=3, help="set length of SPI memory address in bytes (default: 3)")
 parser.add_argument("--endian", choices=["msb", "lsb"], nargs="?", default="msb", help="set endianness of SPI memory bytes (default: msb)")
-parser.add_argument("--filter", choices=["r", "w"], nargs="?", default="rw", help="analyze only Read or Write commands (default: both)")
+parser.add_argument("--filter", choices=["rw","r", "w","no_regs"], nargs="?", default="rw", help="analyze only Read or Write commands (default: both)")
 parser.add_argument("-o", nargs="?", default="output.bin", help="flash image output file name (default: output.bin)")
 parser.add_argument("--summary", help="print summary of sniffed commands and metadata", action="store_true")
 #parser.add_argument("--colors", help="output color codes", action="store_true")
@@ -305,6 +305,27 @@ elif header[2] == "Address":
 else:
     print 'Unrecognized input file. Exiting.'
     exit()
+print(args.filter)
+
+if args.filter == 'w':
+    filter_w = True
+else:
+    filter_w = False
+if args.filter == 'r':
+    filter_r = True
+else:
+    filter_r = False
+if args.filter == 'rw':
+    filter_w = True
+    filter_r = True
+
+if args.filter == 'no_regs':
+    filter_out = True
+    filter_w = True
+    filter_r = True
+else:
+    filter_out = False
+
 
 print "Parsing {0} data...\n".format(chip_type)
 for packet in packets:
@@ -431,7 +452,8 @@ for packet in packets:
               (command == 0x0c) or       # Fast Read 4-bytes address mode
               (command == 0xbb) or       # Read Data (2x I/O)
               (command == 0x3b)):        # Fast Read Dual Output
-            if "r" in args.filter:
+            
+            if filter_r:
                 if (command == 0x0c and curr_addr_byte == 4) or (command != 0x0c and curr_addr_byte == args.addrlen):  # we have the whole address. read data
                     if (command == 0x0b or command == 0x0c or command == 0x3b) and (dummy_byte_fastread == True):
                         dummy_byte_fastread = False     # Fast Read command sends a dummy byte (8 clock cycles) after the address
@@ -491,7 +513,7 @@ for packet in packets:
                         address_bytes[curr_addr_byte] = mosi_data
                         curr_addr_byte += 1
         elif command == 0x02:            # Page Program (Write)
-            if "w" in args.filter:
+            if filter_w:
                 write_byte = mosi_data   # the data and addr in a write command goes on MOSI
                 addr_byte = mosi_data
                 if curr_addr_byte == args.addrlen:   # we have the whole address. read data
@@ -560,7 +582,7 @@ for packet in packets:
                 else:
                     SRP = "Software Controlled (WEL)"
 
-            if args.v > 1:
+            if args.v > 1 and not filter_out:
                 print '  +----------------------------------------------------------+'
                 print '  |                                                          |'
                 print '  |                Status Register 1 = 0x{:02X}                  |'.format(SR1)
@@ -671,7 +693,9 @@ except:
     print 'Failed to write the output file'
 #print 'Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
 #                FLASH_ENDING_SIZE, args.o, bytes_sniffed, ((bytes_sniffed / float(FLASH_ENDING_SIZE)) * 100.0), bytes_sniffed_written)
-print 'Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
+
+if highest_byte >0 : 
+    print 'Rebuilt image: {0} bytes (saved to {1})\nCaptured data: {2} bytes ({3:.2f}%) ({4} bytes from Write commands)'.format(
                 highest_byte+1, args.o, bytes_sniffed, ((bytes_sniffed / float(highest_byte)) * 100.0), bytes_sniffed_written)
 
 
